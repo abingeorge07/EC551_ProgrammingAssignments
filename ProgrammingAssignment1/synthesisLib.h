@@ -3,7 +3,6 @@
 
 class synth
 {
-
     public:
         synth();
 };
