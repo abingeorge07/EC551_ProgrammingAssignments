@@ -7,6 +7,4 @@ Professor Densmore
 This repo includes the code and a brief explanation of the programming assignments for this course.
 
 
-Authors:
-- Visaal
-- Abin 
+Authors: Visaal & Abin 
