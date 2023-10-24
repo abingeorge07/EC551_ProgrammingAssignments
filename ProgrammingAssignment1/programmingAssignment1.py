@@ -377,7 +377,9 @@ def mainPrinting(binary_combinations, num_vars):
         \n14) Please I just want to leave!\n\n")
         
         choice = int(input("What is thy choice? "))
-    
+        
+        os.system('cls' if os.name == 'nt' else 'clear')
+        
         if choice == 1:
             print(f"\nCanonical SOP: \n{canonical_sop}")
         elif choice == 2:
@@ -407,9 +409,11 @@ def mainPrinting(binary_combinations, num_vars):
         elif choice == 13:
             printStatus = False
         elif choice == 14:
-            exit()        
-       
-   
+            exit()   
+        else:
+            print("Invalid choice")
+        
+        
         
         
 
@@ -437,19 +441,24 @@ def truth_table_to_canonical():
     
  # reading from a file
 def readFile():
-    print("Here are the files in this directory, choose the right one!\n")
-    i = 1
-    dir = []
-    for dirnames in os.listdir():
-        print(str(i)+") "+ dirnames+"\n")
-        dir.append(dirnames)
-        i = i+1
     
-    fileNum = int(input("Which file do you want to open? "))
-    
-    if(fileNum<1 or fileNum >= i):
-        print("Invalid choice\n")
-        exit()
+    fileNum = -1
+    while(fileNum<1 or fileNum >= i):
+        print("Here are the files in this directory, choose the right one!\n")
+        i = 1
+        dir = []
+        for dirnames in os.listdir():
+            print(str(i)+") "+ dirnames+"\n")
+            dir.append(dirnames)
+            i = i+1
+        
+        fileNum = int(input("Which file do you want to open? "))
+        os.system('cls' if os.name == 'nt' else 'clear')
+        
+        if(fileNum<1 or fileNum >= i):
+            print("Invalid choice\n\n")
+        
+      
     
     f = open(dir[fileNum-1], "r")
     Lines = f.readlines()
@@ -555,10 +564,10 @@ def readFunction():
     
 # choose what type of input you'd like
 if __name__ == "__main__":
-
+    os.system('cls' if os.name == 'nt' else 'clear')
     while True: 
         choice = int(input("Choose your method of input \n\n1) Type in your boolean function in SOP format. \n2) Type in all the minterms via command line. \n3) Use a PLA file.\n\nWhat shall thee choose? "))
-        
+        os.system('cls' if os.name == 'nt' else 'clear')
         if choice == 1:
             readFunction()   
         elif choice == 2:
