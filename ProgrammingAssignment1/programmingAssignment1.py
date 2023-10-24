@@ -1,5 +1,11 @@
+# EC 551: Advanced Digital Design
+# Programming Assignment 1
+
+# Authors: Visaal & Abin
+
 import pdb
 import os
+import sys
 
 def row_to_term(row):
     """Convert a binary string to a term for SOP."""
@@ -55,6 +61,8 @@ def covers2(minterm, prime_implicant):
         return True
     else: 
         return False
+        
+# removes any repeated term or removes a smaller implicant if a bigger one that covers it exists
 def removeRepeated(all_prime_implicants):
     """Remove repeated prime implicants"""
     all_prime_implicants = list(all_prime_implicants)
@@ -84,11 +92,10 @@ def removeRepeated(all_prime_implicants):
                     new_prime_implicants.append(added2)
                 if (removed in new_prime_implicants):
                     new_prime_implicants.remove(removed)
-            
-                
                 
     return set(new_prime_implicants)
     
+# finds all the prime implicants
 def find_all_prime_implicants(binary_combinations):
     prime_implicants = set(binary_combinations)
     all_prime_implicants = set()
@@ -126,6 +133,8 @@ def find_all_prime_implicants(binary_combinations):
    
     return all_prime_implicants2
 
+
+
 def simplify_prime_implicants(prime_implicants):
     changes = True
     prev_implicants = prime_implicants.copy()
@@ -152,6 +161,7 @@ def simplify_prime_implicants(prime_implicants):
 
     return prev_implicants
     
+# removes all the EPIs from the PIs
 def removeEssential(prime_implicant, essential_prime_implicants):
     PI_non = set()
     
@@ -160,7 +170,8 @@ def removeEssential(prime_implicant, essential_prime_implicants):
             PI_non.add(term)
     
     return PI_non
-    
+  
+# check if the simplified SOP terms cover all the binary combinations  
 def findBinaryCovered(simplified, binary_combinations):
     arr = [0] * len(binary_combinations)
     listSimp = list(simplified)
@@ -174,9 +185,8 @@ def findBinaryCovered(simplified, binary_combinations):
                 
     return arr           
             
-            
+# finds a PI that is not essential to cover a term             
 def findPI_non(binaryComb, PI_non):
-   
     PI_nonList = list(PI_non)
     works =[0]*len(PI_nonList)
     binaryComb = list(binaryComb)
@@ -195,7 +205,8 @@ def findPI_non(binaryComb, PI_non):
                 
     return idealPI
                 
-    
+
+# simplify the SOP    
 def simplify_prime_implicants2(prime_implicant, essential_prime_implicants, binary_combinations):
     simplified = set(essential_prime_implicants)
     PI_non = removeEssential(prime_implicant, essential_prime_implicants)
@@ -246,6 +257,7 @@ def get_minimal_cover(binary_combinations, prime_implicants):
             del coverage[m]
 
     return minimal_cover
+    
 def get_essential_prime_implicants(binary_combinations, prime_implicants):
     """Get the essential prime implicants from the given set of prime implicants."""
     
@@ -267,6 +279,7 @@ def get_essential_prime_implicants(binary_combinations, prime_implicants):
 
     return set(essenPI)
 
+# find number of onset minterms and maxterms
 def numOnsetMinMax(binaryComb, numInputs):
     onsetMin = len(binaryComb)
     onsetMax = (2**(numInputs)) - onsetMin
@@ -274,7 +287,7 @@ def numOnsetMinMax(binaryComb, numInputs):
     return onsetMin, onsetMax
 
 
-
+# find the min and max terms
 def findMinMaxTerms(binary_combinations, numInputs):
     n = numInputs - 1
     arrMin = [-1] * len(binary_combinations)
@@ -298,33 +311,15 @@ def findMinMaxTerms(binary_combinations, numInputs):
         if i not in arrMin:
             arrMax.append(i)
 
-    return arrMin, arrMax        
+    return arrMin, arrMax   
 
 
+# main function that finds all the required values and prints it
+def mainPrinting(binary_combinations, num_vars):
 
-def truth_table_to_canonical():
-    num_vars = int(input("Enter number of variables (max 4 for this example): "))
-    if num_vars > 4:
-        print("Supports up to 4 variables only.")
-        return
-    elif num_vars == 0:
-        print("Number of variables cannot be zero.")
-        return
-        
-
-    # SOP Calculation
-    print(f"Enter decimal numbers (space seperated) that represent combinations of {'ABCD'[:num_vars]} resulting in an output of 1:")
-    decimal_numbers = list(map(int, input().split(' ')))
-    # decimal_numbers = [1,  6, 7, 11, 12, 13, 15]
-    
-    binary_combinations = [dec_to_bin(dec, num_vars) for dec in decimal_numbers]
-    
-   
-    
     all_prime_implicants = find_all_prime_implicants(binary_combinations)
     essential_prime_implicants = get_essential_prime_implicants(binary_combinations, all_prime_implicants)
     simplified_prime_implicants= simplify_prime_implicants2(all_prime_implicants, essential_prime_implicants, binary_combinations)
-    # simplified_prime_implicants = simplify_prime_implicants(all_prime_implicants)
 
     sop_terms = [row_to_term(row) for row in binary_combinations]
     canonical_sop = ' | '.join(sop_terms)
@@ -346,23 +341,21 @@ def truth_table_to_canonical():
 
     num_literals_original = sum([count_literals(term) for term in sop_terms])
     num_literals_simplified = sum([count_literals(term) for term in simplified_terms])
- 
+    
     
     minimal_prime_implicants = get_minimal_cover(binary_combinations, all_prime_implicants)
     minimal_terms = [row_to_term(row) for row in minimal_prime_implicants]
     minimal_sop = ' | '.join(minimal_terms)
     num_literals_minimal = sum([count_literals(term) for term in minimal_terms])
-    # all_prime_implicants = find_all_prime_implicants(binary_combinations)
-    
-    # simplified_prime_implicants= simplify_prime_implicants2(all_prime_implicants, essential_prime_implicants, binary_combinations)
     
     simplified_prime_implicants = simplify_prime_implicants(all_prime_implicants)
     essential_terms = [row_to_term(row) for row in essential_prime_implicants]
     essential_sop = ' , '.join(essential_terms)
-     
-    onsetMin, onsetMax = numOnsetMinMax(binary_combinations, num_vars)
     
-    arrMin, arrMax = findMinMaxTerms(binary_combinations, num_vars)
+    onsetMin, onsetMax = numOnsetMinMax(binary_combinations, num_vars)
+    arrMin , arrMax = findMinMaxTerms(binary_combinations, num_vars)
+    PI_num = len(all_prime_implicants)
+    EPI_num = len(essential_prime_implicants)
     
     
     ## finding minimal POS
@@ -372,28 +365,77 @@ def truth_table_to_canonical():
     simplified_prime_implicants_MAX = simplify_prime_implicants2(all_prime_implicants_MAX, essential_prime_implicants_MAX, binaryComb_max)
     pos_terms = [row_to_pos_term(row) for row in simplified_prime_implicants_MAX]
     minimal_pos = ' & '.join(pos_terms)
-    
     pos_terms = [row_to_pos_term(row) for row in binaryComb_max]
     canonical_pos = ' & '.join(pos_terms)
-     
-    print(f"\nCanonical SOP: {canonical_sop}")
-    print(f"\nInverse SOP (iSOP): {canonical_isop}")
-    print(f"\nCanonical POS: {canonical_pos}")
-    print(f"\nInverse POS (iPOS): {canonical_ipos}")
-    print(f"Prime Implicants: {prime_implicants_sop}")
-    print(f"\nEssential Prime Implicants: {essential_sop}")
     
-    print(f"Simplified SOP: {simplified_sop}")
-    print(f"Number of saved literals (Prime Implicants): {num_literals_original - num_literals_simplified}")
-    print(f"\nMinimal SOP: {minimal_sop}")
-    print(f"\nMinimal POS: {minimal_pos}")
-    print(f"Number of saved literals (Minimal): {num_literals_original - num_literals_minimal}")
-    print(f"Number of onset minterms: {onsetMin}")
-    print(f"Number of onset maxterms: {onsetMax}")
-    print(f"Following are the minterms:\n {arrMin}")
-    print(f"Following are the maxterms:\n {arrMax}")
+    printStatus = True
+    
+    while printStatus is True:
+        print("\n\n1) Canonical SOP \n2) Canonical POS \n3) Canonical SOP of inverse \n4) Canonical POS of inverse \
+        \n5) Minimized SOP \n6) Minimized POS \n7) Number of PIs \n8) Number of EPIs \n9) Number of ON-set minterms \
+        \n10) Number of ON-set maxterms \n11) Print minterms \n12) Print maxterms \n13) Run a different boolean equation \
+        \n14) Please I just want to leave!\n\n")
+        
+        choice = int(input("What is thy choice? "))
+    
+        if choice == 1:
+            print(f"\nCanonical SOP: \n{canonical_sop}")
+        elif choice == 2:
+            print(f"\nCanonical POS: \n{canonical_pos}")
+        elif choice == 3:
+            print(f"\nInverse SOP (iSOP): {canonical_isop}")        
+        elif choice == 4:
+            print(f"\nInverse POS (iPOS): {canonical_ipos}")
+        elif choice == 5:
+            print(f"\nSimplified SOP: {simplified_sop}\n\n")
+            print(f"Number of saved literals (Prime Implicants): {num_literals_original - num_literals_simplified}")
+        elif choice == 6:
+            print(f"\nMinimal POS: {minimal_pos}\n\n")
+            print(f"Number of saved literals (Minimal): {num_literals_original - num_literals_minimal}")
+        elif choice == 7:
+            print(f"\nNum of PI: {PI_num}\n\nPrime Implicants: {prime_implicants_sop}\n")
+        elif choice == 8:
+            print(f"\nNum of EPI: {EPI_num}\n\nEssential Prime Implicants: {essential_sop}")
+        elif choice == 9:
+            print(f"\nNumber of onset minterms: {onsetMin}")
+        elif choice == 10:
+            print(f"\nNumber of onset maxterms: {onsetMax}")
+        elif choice == 11:
+            print(f"\nFollowing are the minterms:\n {arrMin}")
+        elif choice == 12:
+            print(f"\nFollowing are the maxterms:\n {arrMax}")
+        elif choice == 13:
+            printStatus = False
+        elif choice == 14:
+            exit()        
+       
+   
+        
+        
+
+
+# using minterms
+def truth_table_to_canonical():
+    num_vars = int(input("Enter number of variables (max 4 for this example): "))
+    if num_vars > 4:
+        print("Supports up to 4 variables only.")
+        return
+    elif num_vars == 0:
+        print("Number of variables cannot be zero.")
+        return
+        
+
+    # SOP Calculation
+    print(f"Enter decimal numbers (space seperated) that represent combinations of {'ABCD'[:num_vars]} resulting in an output of 1:")
+    decimal_numbers = list(map(int, input().split(' ')))
+    # decimal_numbers = [1,  6, 7, 11, 12, 13, 15]
+    
+    binary_combinations = [dec_to_bin(dec, num_vars) for dec in decimal_numbers]
+    
+    mainPrinting(binary_combinations, num_vars)
     
     
+ # reading from a file
 def readFile():
     print("Here are the files in this directory, choose the right one!\n")
     i = 1
@@ -415,7 +457,7 @@ def readFile():
     count = 0
     
     binary_combinations = []
-    numInputs = -1
+    num_vars = -1
     
     # only looks at one output logic with at most 4 inputs
     for line in Lines:
@@ -426,83 +468,11 @@ def readFile():
                 strBin = line[0:index0]
                 binary_combinations.append(strBin)
         elif(line[0:3] == ".i "):
-            numInputs = int(line[3])
-           
-    
-   
-    all_prime_implicants = find_all_prime_implicants(binary_combinations)
-    essential_prime_implicants = get_essential_prime_implicants(binary_combinations, all_prime_implicants)
-    simplified_prime_implicants= simplify_prime_implicants2(all_prime_implicants, essential_prime_implicants, binary_combinations)
-    # simplified_prime_implicants = simplify_prime_implicants(all_prime_implicants)
-
-    sop_terms = [row_to_term(row) for row in binary_combinations]
-    canonical_sop = ' | '.join(sop_terms)
-
-    prime_implicants_terms = [row_to_term(row) for row in all_prime_implicants]
-    prime_implicants_sop = ' , '.join(prime_implicants_terms)
-
-    simplified_terms = [row_to_term(row) for row in simplified_prime_implicants]
-    simplified_sop = ' | '.join(simplified_terms)
-
-    isop_terms = get_inverse_sop_terms(binary_combinations, numInputs)
-    canonical_isop = ' | '.join(isop_terms)
-
-    
-    # iPOS Calculation based on 1-output terms
-    ipos_terms = get_inverse_pos_terms(binary_combinations)
-    canonical_ipos = ' & '.join(ipos_terms)
-
-
-    num_literals_original = sum([count_literals(term) for term in sop_terms])
-    num_literals_simplified = sum([count_literals(term) for term in simplified_terms])
-    
-    
-    minimal_prime_implicants = get_minimal_cover(binary_combinations, all_prime_implicants)
-    minimal_terms = [row_to_term(row) for row in minimal_prime_implicants]
-    minimal_sop = ' | '.join(minimal_terms)
-    num_literals_minimal = sum([count_literals(term) for term in minimal_terms])
-    
-    simplified_prime_implicants = simplify_prime_implicants(all_prime_implicants)
-    essential_terms = [row_to_term(row) for row in essential_prime_implicants]
-    essential_sop = ' , '.join(essential_terms)
-    
-    onsetMin, onsetMax = numOnsetMinMax(binary_combinations, numInputs)
-    arrMin , arrMax = findMinMaxTerms(binary_combinations, numInputs)
-    
-    
-    
-    ## finding minimal POS
-    binaryComb_max = [dec_to_bin(dec, numInputs) for dec in arrMax]
-    all_prime_implicants_MAX = find_all_prime_implicants(binaryComb_max)
-    essential_prime_implicants_MAX = get_essential_prime_implicants(binaryComb_max, all_prime_implicants_MAX)
-    simplified_prime_implicants_MAX = simplify_prime_implicants2(all_prime_implicants_MAX, essential_prime_implicants_MAX, binaryComb_max)
-    pos_terms = [row_to_pos_term(row) for row in simplified_prime_implicants_MAX]
-    minimal_pos = ' & '.join(pos_terms)
-    
-    pos_terms = [row_to_pos_term(row) for row in binaryComb_max]
-    canonical_pos = ' & '.join(pos_terms)
-    
-    
-        
-    print(f"\nCanonical SOP: {canonical_sop}")
-    print(f"\nInverse SOP (iSOP): {canonical_isop}")
-    print(f"\nCanonical POS: {canonical_pos}")
-    print(f"\nInverse POS (iPOS): {canonical_ipos}")
-    print(f"Prime Implicants: {prime_implicants_sop}")
-    print(f"\nEssential Prime Implicants: {essential_sop}")
-    
-    print(f"Simplified SOP: {simplified_sop}")
-    print(f"Number of saved literals (Prime Implicants): {num_literals_original - num_literals_simplified}")
-    print(f"\nMinimal SOP: {minimal_sop}")
-    print(f"Number of saved literals (Minimal): {num_literals_original - num_literals_minimal}")
-    print(f"\nMinimal POS: {minimal_pos}")
-    print(f"Number of onset minterms: {onsetMin}")
-    print(f"Number of onset maxterms: {onsetMax}")
-    print(f"Following are the minterms:\n {arrMin}")
-    print(f"Following are the maxterms:\n {arrMax}")
-    
-    
-    
+            num_vars = int(line[3])
+            
+    mainPrinting(binary_combinations, num_vars)        
+            
+# given a boolean function only in SOP format            
 def readFunction():
     num_vars = int(input("Enter number of variables (max 4 for this example): "))
     if num_vars > 4:
@@ -578,98 +548,23 @@ def readFunction():
                 binaryComb.append(string2add)   
         
     binaryComb = list(removeRepeated(binaryComb))
-        
-    binary_combinations   = binaryComb;
+          
     
-    all_prime_implicants = find_all_prime_implicants(binary_combinations)
-    essential_prime_implicants = get_essential_prime_implicants(binary_combinations, all_prime_implicants)
-    simplified_prime_implicants= simplify_prime_implicants2(all_prime_implicants, essential_prime_implicants, binary_combinations)
-
-    sop_terms = [row_to_term(row) for row in binary_combinations]
-    canonical_sop = ' | '.join(sop_terms)
-
-    prime_implicants_terms = [row_to_term(row) for row in all_prime_implicants]
-    prime_implicants_sop = ' , '.join(prime_implicants_terms)
-
-    simplified_terms = [row_to_term(row) for row in simplified_prime_implicants]
-    simplified_sop = ' | '.join(simplified_terms)
-
-    isop_terms = get_inverse_sop_terms(binary_combinations, num_vars)
-    canonical_isop = ' | '.join(isop_terms)
-
-    
-    # iPOS Calculation based on 1-output terms
-    ipos_terms = get_inverse_pos_terms(binary_combinations)
-    canonical_ipos = ' & '.join(ipos_terms)
-
-
-    num_literals_original = sum([count_literals(term) for term in sop_terms])
-    num_literals_simplified = sum([count_literals(term) for term in simplified_terms])
+    mainPrinting(binaryComb, num_vars)  
     
     
-    minimal_prime_implicants = get_minimal_cover(binary_combinations, all_prime_implicants)
-    minimal_terms = [row_to_term(row) for row in minimal_prime_implicants]
-    minimal_sop = ' | '.join(minimal_terms)
-    num_literals_minimal = sum([count_literals(term) for term in minimal_terms])
-    
-    simplified_prime_implicants = simplify_prime_implicants(all_prime_implicants)
-    essential_terms = [row_to_term(row) for row in essential_prime_implicants]
-    essential_sop = ' , '.join(essential_terms)
-    
-    onsetMin, onsetMax = numOnsetMinMax(binary_combinations, num_vars)
-    arrMin , arrMax = findMinMaxTerms(binary_combinations, num_vars)
-    
-    
-    
-    ## finding minimal POS
-    binaryComb_max = [dec_to_bin(dec, num_vars) for dec in arrMax]
-    all_prime_implicants_MAX = find_all_prime_implicants(binaryComb_max)
-    essential_prime_implicants_MAX = get_essential_prime_implicants(binaryComb_max, all_prime_implicants_MAX)
-    simplified_prime_implicants_MAX = simplify_prime_implicants2(all_prime_implicants_MAX, essential_prime_implicants_MAX, binaryComb_max)
-    pos_terms = [row_to_pos_term(row) for row in simplified_prime_implicants_MAX]
-    minimal_pos = ' & '.join(pos_terms)
-    
-    pos_terms = [row_to_pos_term(row) for row in binaryComb_max]
-    canonical_pos = ' & '.join(pos_terms)
-    
-    
-        
-    print(f"\nCanonical SOP: {canonical_sop}")
-    print(f"\nInverse SOP (iSOP): {canonical_isop}")
-    print(f"\nCanonical POS: {canonical_pos}")
-    print(f"\nInverse POS (iPOS): {canonical_ipos}")
-    print(f"Prime Implicants: {prime_implicants_sop}")
-    print(f"\nEssential Prime Implicants: {essential_sop}")
-    
-    print(f"Simplified SOP: {simplified_sop}")
-    print(f"Number of saved literals (Prime Implicants): {num_literals_original - num_literals_simplified}")
-    print(f"\nMinimal SOP: {minimal_sop}")
-    print(f"Number of saved literals (Minimal): {num_literals_original - num_literals_minimal}")
-    print(f"\nMinimal POS: {minimal_pos}")
-    print(f"Number of onset minterms: {onsetMin}")
-    print(f"Number of onset maxterms: {onsetMax}")
-    print(f"Following are the minterms:\n {arrMin}")
-    print(f"Following are the maxterms:\n {arrMax}")
-        
-        
-   
-            
-                
-       
-    
-    
-
+# choose what type of input you'd like
 if __name__ == "__main__":
 
-    choice = int(input("Command line input minterms(1) or PLA File(2) or input function(3)\n"))
-    
-    if choice == 1:
-        truth_table_to_canonical()
-    elif choice == 2:
-        readFile()
-    elif choice == 3:
-        readFunction()
-    else:
-        print("Invalid input\n")
-  
-
+    while True: 
+        choice = int(input("Choose your method of input \n\n1) Type in your boolean function in SOP format. \n2) Type in all the minterms via command line. \n3) Use a PLA file.\n\nWhat shall thee choose? "))
+        
+        if choice == 1:
+            readFunction()   
+        elif choice == 2:
+            truth_table_to_canonical()
+        elif choice == 3:
+            readFile()
+        else:
+            print("Invalid input\n")
+      
