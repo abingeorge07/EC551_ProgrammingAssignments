@@ -37,3 +37,14 @@ To find the Essential Prime Implicants, the Quine McCluskey method was used.
 These were the main steps taken to create the logic synthesizer.
 
 # Demo
+## Choosing Input
+![choosingInput](images/input.png)
+
+## Enter Boolean Function
+![booleanFunction](images/functionEnter.png)
+
+## Canonical SOP
+![canonicalSOP](images/cononicalSOP.png)
+
+## Simplified SOP
+![simplifiedSOP](images/simplifiedSOP.png)
