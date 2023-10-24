@@ -31,4 +31,9 @@ a. Report on the number of saved literals vs. the canonical version
 
 # Brief Implementation Overview
 
-Given any form of input, the first step was to find all the binary combinations that set the equation to 1. Using these combinations, all the implicants and prime implicants were determined. To find the Essential Prime Implicants, the Quine McCluskey method was used.
+Given any form of input, the first step was to find all the binary combinations that set the equation to 1. 
+Using these combinations, all the implicants and prime implicants were determined. 
+To find the Essential Prime Implicants, the Quine McCluskey method was used. 
+These were the main steps taken to create the logic synthesizer.
+
+# Demo
