@@ -43,6 +43,11 @@ These were the main steps taken to create the logic synthesizer.
 ## Enter Boolean Function
 ![booleanFunction](images/functionEnter.png)
 
+
+# Authors
+- Visaal
+- Abin
+
 ## Canonical SOP
 ![canonicalSOP](images/cononicalSOP.png)
 
