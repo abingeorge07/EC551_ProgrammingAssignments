@@ -4,4 +4,9 @@ Fall 2023\
 Professor Densmore
 
 
-This repo includes the code and a brief explanation of the programming assignments for the Advanced Digital Design course at Boston University.
+This repo includes the code and a brief explanation of the programming assignments for this course.
+
+
+Authors:
+- Visaal
+- Abin 
