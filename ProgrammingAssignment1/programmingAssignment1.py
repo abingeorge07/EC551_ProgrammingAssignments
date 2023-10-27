@@ -368,6 +368,17 @@ def mainPrinting(binary_combinations, num_vars):
     pos_terms = [row_to_pos_term(row) for row in binaryComb_max]
     canonical_pos = ' & '.join(pos_terms)
     
+    if(len(canonical_pos) == 0):
+        minimal_pos = 1
+        simplified_sop = 1
+        canonical_pos = 1
+        canonical_isop = 0
+    elif (len(simplified_sop) == 0):
+        minimal_pos = 0
+        simplified_sop = 0
+        canonical_sop = 0
+        canonical_ipos = 1
+    
     printStatus = True
     
     while printStatus is True:
@@ -431,10 +442,16 @@ def truth_table_to_canonical():
 
     # SOP Calculation
     print(f"Enter decimal numbers (space seperated) that represent combinations of {'ABCD'[:num_vars]} resulting in an output of 1:")
-    decimal_numbers = list(map(int, input().split(' ')))
-    # decimal_numbers = [1,  6, 7, 11, 12, 13, 15]
+    i = input()
+    i = i.strip()
     
-    binary_combinations = [dec_to_bin(dec, num_vars) for dec in decimal_numbers]
+    if(i == ""):
+        binary_combinations = []
+    else:
+        decimal_numbers = list(map(int, i.split(' ')))
+        
+        if(len(decimal_numbers) > 0): 
+            binary_combinations = [dec_to_bin(dec, num_vars) for dec in decimal_numbers]
     
     mainPrinting(binary_combinations, num_vars)
     
@@ -498,7 +515,7 @@ def readFunction():
     terms = function.split("+")
     binaryComb = []
     vecTemp = ["A", "B", "C", "D"]
-    
+    alwaysFalse = False
     
     for i in range(0,len(terms)):
         stringBin = list("----")
@@ -506,11 +523,16 @@ def readFunction():
         neg = False
         for j in range(0,len(stringFocus)):
             if(stringFocus[j] == "a" or stringFocus[j] == "A"):
-                if(neg):
-                    stringBin[0] = '0'
-                    neg = False
+                if(stringBin[0] == '0' or stringBin[0] == '1'):
+                    if((stringBin[0] == '0' and not neg) or (stringBin[0] == '1' and neg)):
+                        alwaysFalse = True
+                        break
                 else:
-                    stringBin[0] = '1'
+                    if(neg):
+                        stringBin[0] = '0'
+                        neg = False
+                    else:
+                        stringBin[0] = '1'
             elif(stringFocus[j] == "b" or stringFocus[j] == "B"):
                 if(neg):
                     stringBin[1] = '0'
@@ -538,26 +560,31 @@ def readFunction():
         numofDashes = stringBin.count("-")
         stringBinOriginal = stringBin[0:num_vars]
         
-        if(numofDashes == 0):
-            string2add = "".join(stringBin)
-            binaryComb.append(string2add)
-        else:
-            totalPoss = 2**(numofDashes)
-            
-            
-            for i in range(0,totalPoss):
-                counter = 0
-                stringBinTemp= stringBinOriginal[0:num_vars]
-                for j in range(0,numofDashes):
-                    index1 = stringBinTemp.index("-")
-                    temp = format(i, '#06b')
-                    stringBinTemp[index1] = temp[6-numofDashes+j]
+        if(alwaysFalse == False):                
+            if(numofDashes == 0):
+                string2add = "".join(stringBin)
+                binaryComb.append(string2add)
+            else:
+                totalPoss = 2**(numofDashes)
                 
-                string2add = "".join(stringBinTemp)
-                binaryComb.append(string2add)   
+                
+                for i in range(0,totalPoss):
+                    counter = 0
+                    stringBinTemp= stringBinOriginal[0:num_vars]
+                    for j in range(0,numofDashes):
+                        index1 = stringBinTemp.index("-")
+                        temp = format(i, '#06b')
+                        stringBinTemp[index1] = temp[6-numofDashes+j]
+                    
+                    string2add = "".join(stringBinTemp)
+                    binaryComb.append(string2add)  
+
+        else:
+            alwaysFalse = False
         
+   
     binaryComb = list(removeRepeated(binaryComb))
-          
+        
     
     mainPrinting(binaryComb, num_vars)  
     
