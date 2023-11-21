@@ -568,7 +568,11 @@ def outputFunction(myLUT):
 
 if __name__ == "__main__":
     os.system('cls' if os.name == 'nt' else 'clear')
-    while True: 
+
+    exec(open("/home/abg/Desktop/PhD/PhD-Coursework/Fall 2023/EC 551 Advanced Digital Design/Programming_Assignments/Programming Assignment 2 Backup/MLS.py").read())
+
+    run = False
+    while run is True: 
         choice = int(input("Choose your method of input \n\n1) Type in your boolean function(s) in SOP format. \n2) Load bitstream\n\nWhat shall thee choose? "))
         os.system('cls' if os.name == 'nt' else 'clear')
         chosen = False
