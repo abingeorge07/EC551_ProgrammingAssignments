@@ -1,6 +1,10 @@
 import numpy as np
 import os 
 import pickle 
+import sympy.logic as logic
+import sympy as sp
+from sympy.logic.inference import satisfiable
+import random
 from LUT_class import LUT_class
 from LUT_class import FPGA
 from MLS_class import MLS
@@ -8,7 +12,64 @@ from MLS_class import intersectionClass
 from MLS_class import finalEquation
 from LUT_mat import LUT_object
 from LUT_mat import LUT
+import re
 
+
+# PARSING FUNCTIONS
+# Extended SOP Conversion Functions
+
+def sympy_to_conventional_format(sympy_expr):
+
+    expr = sympy_expr.replace("(", "").replace(")", "").replace(" & ", "")
+
+    return expr
+
+
+
+def parse_and_simplify_sop(sop_formula):
+    sop_formula = sop_formula.upper().replace('~', ' ~').replace('&', ' & ').replace('|', ' | ')
+    variables = sorted(set(filter(str.isalpha, sop_formula)))
+    symbols = {var: sp.symbols(var) for var in variables}
+
+    for var in variables:
+        sop_formula = sop_formula.replace(var, f'symbols["{var}"]')
+
+    try:
+        expression = eval(sop_formula)
+
+        # Check for contradiction (unsatisfiable)
+        if not satisfiable(expression):
+            return '0', list(symbols.values())
+        # Check for tautology (negation is unsatisfiable)
+        if not satisfiable(~expression):
+            return '1', list(symbols.values())
+
+        simplified_expression = logic.simplify_logic(expression, form='dnf', deep=True)
+        conventional_format = str(simplified_expression).replace('Or', '+').replace('And', '&').replace('Not', '~')
+        conventional_format = re.sub(r'([A-Za-z])', r'\1', conventional_format).strip()
+        return conventional_format, list(symbols.values())
+    except Exception as e:
+        print(f"Error in parsing or simplification: {e}")
+        return None, None
+
+
+# Function to format expressions
+def format_expression(expression):
+    # Remove outer brackets if present
+    expression = expression.strip('[]')
+
+    # Split the expression into individual terms
+    terms = expression.split('|')
+    
+    # Format each term
+    formatted_terms = []
+    for term in terms:
+        # Remove spaces and keep logical operators adjacent to variables
+        formatted_term = term.replace(' ', '').replace('&', '').strip()
+        formatted_term = formatted_term.replace('(' , '') 
+        formatted_term = formatted_term.replace(')' , '')
+        formatted_terms.append(formatted_term)
+    return formatted_terms
 
 
 
@@ -36,8 +97,8 @@ def changeExp(exp, numExpressions):
         for j in range(0, len(exp[i])):
             
             term = exp[i][j]
-            index = (term).find("~") 
-            
+            index = (term).find("~")
+
             while(index>= 0):
                 termList = list(term)
                 termList[index+1] = termList[index+1].lower()
@@ -124,7 +185,6 @@ def finalAllFunctions(finalEquationArr):
         for j in range(0, len(finalEquationArr[i].divisor)):
             tempQuotient = finalEquationArr[i].quotient[j]
             tempQuotient = sorted(tempQuotient)
-            # if(not((len(finalEquationArr[i].divisor) ==1 and  finalEquationArr[i].divisor[0] == "") and len(finalEquationArr[i].remainder) == 0)):
             if(tempQuotient not in listOfFunctions):
                 listOfFunctions.append(tempQuotient)
                 strNew = "F"+str(num)
@@ -178,10 +238,6 @@ def findIdealIntersection(idealIntersections, numExpressions, finalEquationArr, 
 
     indices2remove = []
     for i in range(0, numExpressions):
-        # print(finalEquationArr[i].divisor)
-        # print(finalEquationArr[i].quotient)
-        # print(finalEquationArr[i].remainder)
-        # input("Pause")
         if(((len(finalEquationArr[i].divisor) ==1 and  finalEquationArr[i].divisor[0] == "") and len(finalEquationArr[i].remainder) == 0)):
             indices2remove.append(i)
         else:
@@ -222,6 +278,7 @@ def printFinalEquation(finalEquationArr, auxEq):
         else:
             print("\n")
  
+
 # creating the bitstream
 def createBitstream(myLUT):
     fileName = input("Enter filename for the bitstream:\n")
@@ -257,6 +314,7 @@ def readBitstream():
     f = open(dir[fileNum-1], "rb")
     newLUT = pickle.load(f)
     f.close()
+
 
     return newLUT
 
@@ -359,42 +417,13 @@ def simplify_sop(binary_combinations):
 
 
 
-
-
-
-
-
-
-def parse_sop_formula(sop_formula, num_vars):
-
-    terms = sop_formula.replace(" ", "").split("+")
-    var_map = {chr(97 + i): i for i in range(num_vars)}  # Map 'a' to 0, 'b' to 1, etc.
-    minterms = set()
-    for term in terms:
-        minterm = ['0'] * num_vars
-        i = 0
-        while i < len(term):
-            if term[i] == '~':
-                # If the variable is negated, skip it and move to the next variable
-                i += 2
-                continue
-            # Set the corresponding bit in the minterm to '1'
-            minterm[var_map[term[i]]] = '1'
-            i += 1
-        # Convert the binary minterm to decimal and add to the set
-        minterms.add(int(''.join(minterm), 2))
-
-
-
-    return list(minterms)
-
 def findUniqueInputs(exp):
     temp = set()
     strT = []
     for e in exp:
         for t in e:
             for c in t:
-                strT.append(c)
+                strT.append(c.upper())
 
     temp = set(strT)
     temp = sorted(list(temp))
@@ -414,42 +443,28 @@ def findUniqueInputs(exp):
 def main():
     num_LUTs = int(input("Enter the number of LUTs: "))
     lut_type = int(input("Enter LUT type (4 or 6 inputs): "))
-    # connectivity = input("Enter connectivity (fully/partially): ").lower()
+    connectivity = input("Enter connectivity (fully/partially): ").lower()
     
-    connectivity = "fully"
 
     logic_expressions = []
-    use_independent_sop = input("Do you want to enter an independent SOP formula? (yes/no): ").lower()
+    formatted_expressions = []
 
-    fullSimplifiedSOP = []
+    num_expressions = int(input("Enter the number of logic expressions: "))
+    for _ in range(num_expressions):
 
-    if use_independent_sop == 'yes':
+        sop_formula = input(f"Enter logic expression {_ + 1}: ")
+        expression, variables = parse_and_simplify_sop(sop_formula)
+        
+        if expression is not None:
+            formatted_expressions.append(expression)
+        elif expression == "1":
+            formatted_expressions.append("1")
+        elif expression == "0":
+            formatted_expressions.append("0")
 
-        num_expressions = int(input("Enter the number of logic expressions: "))
-
-        for _ in range(num_expressions):
-            num_vars = int(input("Enter the number of variables in the formula: "))
-            sop_formula = input("Enter the independent SOP formula: ")
-            decimal_numbers = parse_sop_formula(sop_formula, num_vars)
-            binary_combinations = [dec_to_bin(dec, num_vars) for dec in decimal_numbers]
-            simplified_combinations = simplify_sop(binary_combinations)
-            simplified_terms = [row_to_term(row) for row in simplified_combinations]
-            logic_expressions.append(' + '.join(simplified_terms))
-            fullSimplifiedSOP.append(simplified_terms)
-
-    else:
-
-        num_expressions = int(input("Enter the number of logic expressions: "))
-        for _ in range(num_expressions):
-            num_vars = int(input("Enter the number of variables for this expression: "))
-            print(f"Enter {num_vars} decimal numbers for the truth table of expression {_ + 1}:")
-            decimal_numbers = list(map(int, input().split()))
-            binary_combinations = [dec_to_bin(dec, num_vars) for dec in decimal_numbers]
-            simplified_combinations = simplify_sop(binary_combinations)
-            simplified_terms = [row_to_term(row) for row in simplified_combinations]
-            logic_expressions.append(' + '.join(simplified_terms))
-            fullSimplifiedSOP.append(simplified_terms)
-
+    
+    for express in formatted_expressions:
+        logic_expressions.append(format_expression(express))
 
 
 
@@ -457,7 +472,7 @@ def main():
     fullyBool = True
 
     interconnectionArr = []
-    if connectivity == 'partially':
+    if connectivity == 'partially' or connectivity == 'p' :
         fullyBool = False
         custom_connect = input("Do you want to set up custom connections? (yes/no): ").lower()
         if custom_connect == 'yes':
@@ -467,67 +482,213 @@ def main():
 
     finalEq_simplified = createFinalEqArr(num_expressions)
     # changes all the nots to lower case
-    exp_sim = changeExp(fullSimplifiedSOP, num_expressions)
+    exp_sim = changeExp(logic_expressions, num_expressions)
     inputsDict = findUniqueInputs(exp_sim)
     # creates an array of the MLS object
     expressions_sim = createArray(exp_sim, num_expressions)
     # finds all the kernels of each expression
     kernelSearch(expressions_sim, num_expressions)
-    # prints all the kernels
     ## FINDING ALL THE INTERSECTIONS OF THE KERNEL
     # find all the intersections of the kernels
     [listIntersections_sim, idealIntersections_sim]=findIntersections(expressions_sim, num_expressions)
     [finalEq_simplified, auxEq_sim]= findIdealIntersection(listIntersections_sim, num_expressions, finalEq_simplified, expressions_sim)
     
-    # printFinalEquation(finalEq_simplified, auxEq_sim)
 
     # LUT assignment
     myLUT_sim = LUT()
     myLUT_sim.finalEq = finalEq_simplified
     myLUT_sim.auxEq = auxEq_sim
     myLUT_sim.assignVal(num_LUTs, lut_type, auxEq_sim, finalEq_simplified, fpga, fullyBool, inputsDict)
-    # myLUT_sim.printEverything()
+    myLUT_sim.simplifiedEquations = formatted_expressions
 
-    return myLUT_sim
+    # doing the same thing without kernel method
+    nonSimp = convert2finalEq(logic_expressions)
+    finalEq = []
+    myLUT_non = LUT()
+    myLUT_non.auxEq = nonSimp
+    myLUT_non.finalEq = finalEq
+    myLUT_non.assignVal(num_LUTs, lut_type, nonSimp, finalEq, fpga, fullyBool, inputsDict)
+    myLUT_non.simplifiedEquations = formatted_expressions
+    
+    
+      
+    
+    if(myLUT_non.numLUT_used <= myLUT_sim.numLUT_used):
+        mainLUT = myLUT_non
+    else:
+        mainLUT = myLUT_sim
+
+   
+
+    if(mainLUT.numLUT_used > mainLUT.numLUT):
+        print("NOT ENOUGH LUTS\n")
+        print("NEEDS ATLEAST "+str(mainLUT.numLUT_used) +" LUTS.\n")
+        input("Press enter to continue with "+str(mainLUT.numLUT_used)+ " LUTs in fully connected config.")
+
+    elif(mainLUT.fullyBool == False and mainLUT.partialConfig == False):
+        print("No appropriate connections to map the functions\nGoing to try in fully connected configuration.\n\n")
+        input("Press enter to continue")
+
+    return mainLUT
+
+
 
 def inputWire(myLUT):
 
     inputDict = myLUT.inputsDict
 
     for key in inputDict.keys():
-        print("INPUT "+str(key)+ " ->  WIRE " + str(inputDict[key])) 
+        print("INPUT "+str(key)+ " ->  WIRE " + str(inputDict[key.upper()]))         
 
 def outputWire(myLUT):
     outDict = myLUT.outputDict
 
-    for key in outDict.keys():
-        print("LUT "+str(key)+ " ->  WIRE " + str(outDict[key])) 
+    if(myLUT.fullyBool == False and myLUT.partialConfig == True):
+        for key in outDict.keys():
+            if(key in myLUT.newMap.keys()):
+                myKey = myLUT.newMap[key]
+                print("LUT "+str(myKey)+ " ->  WIRE " + str(outDict[key])) 
+            else:
+                print("LUT "+str(key)+ " ->  WIRE " + str(outDict[key])) 
 
+    else:
+        for key in outDict.keys():
+            print("LUT "+str(key)+ " ->  WIRE " + str(outDict[key])) 
+
+
+def printSimpFunction(exp):
+    print()
+    for i in range(0, len(exp)):
+        print(exp[i])
 
 def internalWires(myLUT):
+    print("INPUT WIRES\n")
     inputWire(myLUT)
     print("\n")
+    print("OUTPUT WIRES\n")
     outputWire(myLUT)
+    print("\n")
     outDict = myLUT.outputDict
     inputDict = myLUT.inputsDict
     dictLUT = myLUT.LUTdict
 
+    func2LUT_values = list(myLUT.function2LUT.values())
+    func2LUT_keys = list(myLUT.function2LUT.keys())
+
+    num_inputs = len(myLUT.inputsDict)
     for key in dictLUT.keys():
-        print("LUT "+str(key))
+        if(myLUT.fullyBool == False and myLUT.partialConfig == True):
+            myKey = myLUT.newMap[key]
+            # temp = myKey
+            print("LUT "+str(myKey))
+        else:
+            print("LUT "+str(key))
+
+        temp = key
+
+        print()
+        print(" _____________________")
+        for i in range(0, myLUT.LUTinputs):
+            f = str(temp*myLUT.LUTinputs + num_inputs + i)
+            print("| "+ f ,end="")
+            if(i == 0):
+                l = str(temp + (myLUT.numLUT*myLUT.LUTinputs) + num_inputs)
+            else:
+                l = ""
+
+            r = 20 - len(f) - len(l)
+            s = " "*r
+            print(s, end="")
+
+            if(l != ""):
+                print(l, end="")
+
+            print("|")
+
+        print("|_____________________|")
+
+        functionPrinted = 0
+
         tempLUT = dictLUT[key]
-        print("\nINPUT WIRES")
+
+        # print function
+        print("\nFUNCTION")
+
+        if key in func2LUT_values:
+            indChoice = func2LUT_values.index(key)
+            print(str(func2LUT_keys[indChoice]) +" = ", end="")
+
+
+       
+
+        if tempLUT.divisor == 1 :
+            for i in range(0, len(tempLUT.quotient)):
+                tempTerm = tempLUT.quotient[i]
+
+                for c in tempTerm:
+                    if c.isupper() or c.isdigit():
+                        print(c, end="")
+                    else:
+                        print("~"+c.upper(), end="")
+                
+                if(i != len(tempLUT.quotient)-1):
+                    print("+", end = "")
+
+            functionPrinted = 1 
+            # print("+".join(tempLUT.quotient), end="")
+        else:                
+            for j in range(0, len(tempLUT.divisor)):
+                if j != 0:
+                    print("+", end = "")
+                print("(" + tempLUT.quotient[j]+")" , end="")
+                for c in tempLUT.divisor[j]:
+                    if(c.isupper() or c.isdigit()):
+                        print(c, end="")
+                    else:
+                        print("~"+c.upper(), end="")
+                functionPrinted = 1
+        
+        
+
+        if tempLUT.remainder != 0:
+            if(len(tempLUT.remainder) != 0 ):
+                if(functionPrinted == 1):
+                    print("+", end="")
+
+                for i in range(0, len(tempLUT.remainder)):
+                    tempTerm = tempLUT.remainder[i]
+
+                    for c in tempTerm:
+                        if c.isupper() or c.isdigit():
+                            print(c, end="")
+                        else:
+                            print("~"+c.upper(), end="")   
+                    if(i != len(tempLUT.remainder)-1):
+                        print("+", end = "")
+
+                # print("+".join(tempLUT.remainder), end="")   
+
+
+        print("\n\nINPUT WIRES")
 
         for term in tempLUT.LUTdependents:
-            print(str(outputDict[term]), end=", ")
+            print(str(outDict[term]), end=", ")
 
+        inSet = set()
         for term in tempLUT.wireDependents:
             for c in term:
-                print(str(inputDict[c]), end=", ")
+                if c in inputDict.keys():
+                    inSet.add(c.upper())
+
+        inSet = list(inSet)
+        for c in inSet:
+            print(str(inputDict[c.upper()]), end=", ")
 
         print("\n\nOUTPUT WIRES")
 
-        for term in tempLUT.dep2me:
-            print(str((term*myLUT.LUTinputs)+len(inputDict)), end=", ")
+        for term in tempLUT.dep2me: 
+            newTerm = term
+            print(str(round((newTerm*myLUT.LUTinputs)+len(inputDict))), end=", ")
 
         if(len(tempLUT.dep2me)== 0):
             print(str(outDict[key]), end="")
@@ -541,8 +702,12 @@ def outputFunction(myLUT):
     printStatus = True
 
     while printStatus is True:
-
-        print("\n\n1) Function assigned to the LUT\n2) Internal Connections \n3) External Input connections\n4) External output connections\n5) Store bitstream\n6) Resource allocation summary\n7) Go back! \n8) Stop the program!\n\n")
+        
+        print("\n")
+        print("--------------------------------------")
+        printSimpFunction(myLUT.simplifiedEquations)
+        print()
+        print("\n\n1) Function assigned to the LUT\n2) Internal Connections \n3) External Input connections\n4) External output connections\n5) Store bitstream\n6) Resource allocation summary\n7) Show high level info for all LUTs \n8) Go back! \n9) Stop the program!\n\n")
         choice = int(input("What is thy choice? "))
         os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -559,21 +724,21 @@ def outputFunction(myLUT):
         elif choice == 6:
             resourceAllocation(myLUT)
         elif choice == 7:
-            printStatus = False
+            myLUT.printHighLevel_info()
         elif choice == 8:
+            printStatus = False
+        elif choice == 9:
             exit()
         else:
             print("Invalid choice")
+    
+
 
 
 if __name__ == "__main__":
     os.system('cls' if os.name == 'nt' else 'clear')
-
-    exec(open("/home/abg/Desktop/PhD/PhD-Coursework/Fall 2023/EC 551 Advanced Digital Design/Programming_Assignments/Programming Assignment 2 Backup/MLS.py").read())
-
-    run = False
-    while run is True: 
-        choice = int(input("Choose your method of input \n\n1) Type in your boolean function(s) in SOP format. \n2) Load bitstream\n\nWhat shall thee choose? "))
+    while True: 
+        choice = int(input("Choose your method of input \n\n1) Type in your boolean function(s) in SOP format. \n2) Load bitstream \n3) Stop the program\n\nWhat shall thee choose? "))
         os.system('cls' if os.name == 'nt' else 'clear')
         chosen = False
         if choice == 1:
@@ -582,6 +747,8 @@ if __name__ == "__main__":
         elif choice == 2:
             myLUT = readBitstream()
             chosen = True
+        elif choice == 3:
+            exit()
         else:
             print("Invalid input\n")
 

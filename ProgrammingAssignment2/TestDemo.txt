@@ -1,0 +1,100 @@
+Test example 1 
+
+a & b & c & d 
+
+a | d & b | c 
+
+a | b | c | d 
+
+~a | b | ~c | d
+
+a & b | c & d
+
+e & f | h | ~i
+
+t & ~l | m | n
+
+j | k & ~t & z
+
+k & ~m | l | f
+
+t | ~a & ~b & c
+
+
+Test example 3
+
+a & b & c & d | g & n | h & i
+
+a | d & b | c & l | k | t
+
+a | b | c | d | m & n | s | ~r
+
+~a | b | ~c | d | e | ~f | g | ~i
+
+a & b | c & d | j & k | o & p
+
+e & f | h | ~i | ~k | r & ~n | p
+
+t & ~l | m | n | j & s & p & w
+
+j | k & ~t & z | u | v | i | ~x
+
+k & ~m | l | f | h & i | j & ~a
+
+t | ~a & ~b & c | ~d & ~h & k | m
+
+
+
+Test example 5
+
+a & o | b & o | c & o | m | n 
+
+a & m | b & m | c & m | k & z
+
+a & k | b & k | c & k | o
+
+d & l | e & l | f & l | j | q
+
+d & i | e & i | f & i | m | o
+
+d & w | e & w | f & w | o & l
+
+r & p | t & p | u & p | o | d
+
+r & q | t & q | u & q | a & b
+
+r & ~a | t & ~a | u & ~a | ~l | m
+
+t & ~l | d | v | j & s  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

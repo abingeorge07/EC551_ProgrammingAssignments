@@ -46,10 +46,10 @@ class MLS:
         goodCoKernel = []
         # check if original function is a kernel
         tempKernel = (self.sopForm)[:]
-        # isKernel = self.checkIfKernel(tempKernel)
-        # if isKernel is True:
-        #     (self.kernels).append(tempKernel)
-        #     goodCoKernel.append("1")
+        isKernel = self.checkIfKernel(tempKernel)
+        if isKernel is True:
+            (self.kernels).append(tempKernel)
+            goodCoKernel.append("1")
             
         # which potential co-kernel will give a kernel
         for i in range(0, len(self.cokernels)):
